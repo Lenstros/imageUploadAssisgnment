@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uploader</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm" crossorigin="anonymous"></script></head>
+   
+</head>
+<body>
+    
+    <!-- create image uploader -->
+
+    <div class="container h-100">
+        <Br>
+            <a href="logout" class="btn btn-secondary">logout</a>    
+        <Br>
+        <h2 class="text-center">Upload Image</h2>
+        <div class="row justify-content-center align-items-center h-100">
+            <div class="col col-sm-6 col-md-6 col-lg-4 col-xl-3" style="border: 1px soild black;">
+                <form action="uploader" method="POST" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="image" class="form-label">Image</label>
+                        <input name="image" type="file" class="form-control" id="image">
+                    </div>
+                    <Br>
+                    <button type="submit" class="btn btn-primary" id="submit">Upload</button>
+                    <button type="button" class="btn btn-secondary" onclick="window.location.href='takeImage'">Capture Image</button>
+                </form>
+            </div>
+        </div>
+
+     <!-- sweetalert2 -->
+     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+     <script>
+         // show error message passed from flask
+         var error = "{{ error }}";
+         if (error) {
+             Swal.fire({
+                 icon: 'error',
+                 title: 'Oops...',
+                 text: error,
+             })
+         }
+         const submit = document.getElementById('submit');
+         const image = document.getElementById('image');
+            submit.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (image.value == '') {
+                    
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Please select an image',
+                    })
+                }
+                else {
+                const allowedExtensions = /(\.jpg|\.jpeg|\.png|\.gif)$/i;
+                if (!allowedExtensions.exec(image.value)) {
+                    e.preventDefault();
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Please upload file having extensions .jpeg/.jpg/.png/.gif only.',
+                    })
+                }
+                // get access_token from cookie
+                const access_token = document.cookie.split('=')[1];
+                // create formdata
+                const formData = new FormData();
+                formData.append('image', image.files[0]);
+                // create request
+                const request = new XMLHttpRequest();
+                request.open('POST', 'uploader');
+                // set headers
+                request.setRequestHeader('Authorization', 'Bearer ' + access_token);
+                request.send(formData);
+
+                request.onload = () => {
+                    if (request.status == 200) {
+
+                        // show success message and redirect to result page
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            text: 'Image uploaded successfully',
+                        }).then(() => {
+                            const response = JSON.parse(request.response);
+                            const image_name = response['image_name'];
+                            const urlEncoded = encodeURIComponent(image_name);
+                            window.location.href = 'result?image='+urlEncoded;
+                        })
+                    }
+                    else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Oops...',
+                            text: 'Something went wrong',
+                        })
+                    }
+
+                }}
+            })
+     </script>
+</body>
+</html>
